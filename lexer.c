@@ -166,7 +166,7 @@ int is_HEX(FILE *p_tape)
 
     int prefixHexIndicator = getc(p_tape);
 
-    if (!is_hex_indicator(p_tape))
+    if (!is_hex_indicator(prefixHexIndicator))
     {
         ungetc(prefixHexIndicator, p_tape); //put the character read back in the tape
         ungetc(prefixZero, p_tape);         //put the prefix back in the tape
