@@ -1,3 +1,6 @@
+#ifndef LEXER_H
+#define LEXER_H
+
 #include <stdio.h>
 
 typedef enum {
@@ -7,6 +10,10 @@ typedef enum {
     HEX,
 } EToken;
 
+#define MAX_ID_LEN 32
+
 extern int lineNum;
 
 extern int lxr_get_token(FILE *p_source);
+
+#endif
