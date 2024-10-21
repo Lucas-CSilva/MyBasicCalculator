@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <lexer.h>
 
+char lexeme[MAX_ID_LEN + 1];
 
 int lineNum = 1;
 

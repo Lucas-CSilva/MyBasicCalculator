@@ -13,6 +13,7 @@ typedef enum {
 #define MAX_ID_LEN 32
 
 extern int lineNum;
+extern char lexeme[];
 
 extern int lxr_get_token(FILE *p_source);
 
