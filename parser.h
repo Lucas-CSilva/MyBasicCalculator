@@ -7,8 +7,6 @@
 extern FILE *pSource;
 extern int look_ahead;
 
-extern void psr_match(int expected);
-
-void psr_E(void);
+extern void psr_E(void);
 
 #endif

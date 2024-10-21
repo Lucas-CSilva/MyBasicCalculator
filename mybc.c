@@ -12,8 +12,6 @@ int main()
     
     psr_E();
 
-    printf("\t%d\n", lineNum);
-
     return 0;
 }
 
