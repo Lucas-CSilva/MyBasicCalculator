@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <lexer.h>
 
+char lexeme[MAX_ID_LEN + 1];
 
 int lineNum = 1;
 
@@ -165,7 +166,7 @@ int is_HEX(FILE *p_tape)
 
     int prefixHexIndicator = getc(p_tape);
 
-    if (!is_hex_indicator(p_tape))
+    if (!is_hex_indicator(prefixHexIndicator))
     {
         ungetc(prefixHexIndicator, p_tape); //put the character read back in the tape
         ungetc(prefixZero, p_tape);         //put the prefix back in the tape

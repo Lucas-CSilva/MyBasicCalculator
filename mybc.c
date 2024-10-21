@@ -2,9 +2,11 @@
 #include <parser.h>
 #include <lexer.h>
 
+FILE *pSource;
+
 int main() 
 {
-    FILE *pSource = stdin;
+    pSource = stdin;
 
     look_ahead = lxr_get_token(pSource);
     
