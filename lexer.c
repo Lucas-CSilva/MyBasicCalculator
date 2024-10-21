@@ -4,8 +4,7 @@
 
 char lexeme[MAX_ID_LEN + 1];
 
-int lineNum = 1;
-
+void clear_lexeme(int index);
 void skip_spaces(FILE *p_tape);
 int is_ID(FILE *p_tape);
 int is_DEC(FILE *p_tape);
@@ -28,17 +27,16 @@ int lxr_get_token(FILE *p_source)
 
 #pragma region Private Functions
 
+void clear_lexeme(int index)
+{
+    lexeme[index] = 0;
+}
+
 void skip_spaces(FILE *p_tape)
 {
     int head;
 
-    while (isspace(head = getc(p_tape)))
-    {
-        if (head == '\n')
-        {
-            lineNum++;
-        }
-    }
+    while (isspace(head = getc(p_tape)));
 
     ungetc(head, p_tape);
 }
@@ -73,19 +71,21 @@ int is_hex_indicator(int character)
 /// @return ID if the next token read is an ID, 0 otherwise
 int is_ID(FILE *p_tape)
 {
-    int head = getc(p_tape);
+    int i = 0;
+    lexeme[i] = getc(p_tape);
 
-    if (!isalpha(head))     //if the token does not start with a letter then it is not an ID
+    if (!isalpha(lexeme[i]))     //if the token does not start with a letter then it is not an ID
     {
-        ungetc(head, p_tape); //put the token back in the tape
+        ungetc(lexeme[i], p_tape); //put the token back in the tape
+        clear_lexeme(i);
         return 0;           
     }
 
-    while (isalnum(head = getc(p_tape))); //while the next caracter is an alphanumeic, reads the tape
+    i++;
+    while (isalnum(lexeme[i] = getc(p_tape))) i++; //while the next caracter is an alphanumeic, reads the tape
 
-    ungetc(head, p_tape); //put the character that is not an alphanumeric back into the tape
-    
-    printf("\t is ID\n");
+    ungetc(lexeme[i], p_tape); //put the character that is not an alphanumeric back into the tape
+    clear_lexeme(i);
     
     return ID;
 }
@@ -95,23 +95,27 @@ int is_ID(FILE *p_tape)
 /// @return DEC if the next token read is a DEC, 0 otherwise
 int is_DEC(FILE *p_tape)
 {
-    int head = getc(p_tape);
+    int i = 0;
+    lexeme[i] = getc(p_tape);
 
-    if (!isdigit(head)) //if the token does not start with a digit then it is not a DEC
+    if (!isdigit(lexeme[i])) //if the token does not start with a digit then it is not a DEC
     {
-        ungetc(head, p_tape); //put the token back in the tape
+        ungetc(lexeme[i], p_tape); //put the token back in the tape
+        clear_lexeme(i);
         return 0;
     }
 
-    if (is_zero(head)) //if the token is zero then it is a DEC
+    if (is_zero(lexeme[i])) //if the token is zero then it is a DEC
     {
-        printf("\t is DEC\n");
         return DEC;
     }
 
-    while (isdigit(head = getc(p_tape))); //while the next caracter is a digit, reads the tape
+    i++;
+    while (isdigit(lexeme[i] = getc(p_tape))) i++; //while the next caracter is a digit, reads the tape
     
-    ungetc(head, p_tape); //put the character that is not a digit back into the tape
+    ungetc(lexeme[i], p_tape); //put the character that is not a digit back into the tape
+
+    clear_lexeme(i);
 
     printf("\t is DEC\n");
 
@@ -125,27 +129,36 @@ int is_DEC(FILE *p_tape)
 /// @return OCT if the token read is an OCT, 0 otherwise
 int is_OCT(FILE *p_tape)
 {
-    int prefix = getc(p_tape);
-
-    if (!is_zero(prefix))       //if the token does not start with the prefix zero then it is not an OCT
-    {
-        ungetc(prefix, p_tape); //put the character read back in the tape
-        return 0;
-    }
-
-    int head = getc(p_tape);
+    int prefix = 0;
     
-    if (!is_oct(head))          //if the next character read it's not an octal number then it is not an OCT
+    lexeme[prefix] = getc(p_tape);
+
+    if (!is_zero(lexeme[prefix]))       //if the token does not start with the prefix zero then it is not an OCT
     {
-        ungetc(head, p_tape);   //put the character read back in the tape
-        ungetc(prefix, p_tape); //put the prefix back in the tape
+        ungetc(lexeme[prefix], p_tape); //put the character read back in the tape
+        clear_lexeme(prefix);
         return 0;
     }
 
+    
+    int i = 1;
+    lexeme[i] = getc(p_tape);
+    
+    if (!is_oct(lexeme[i]))          //if the next character read it's not an octal number then it is not an OCT
+    {
+        ungetc(lexeme[i], p_tape);   //put the character read back in the tape
+        ungetc(lexeme[prefix], p_tape); //put the prefix back in the tape
 
-    while (isdigit(head = getc(p_tape)) && is_oct(head = getc(p_tape)));    //while the next caracter is an octal number, reads the tape
-    ungetc(head, p_tape);                                                   //put the character that is not an octal number back into the tape
-    printf("\t is OCT\n");
+        clear_lexeme(i);
+        clear_lexeme(prefix);
+        return 0;
+    }
+
+    i++;
+    while (isdigit(lexeme[i] = getc(p_tape)) && is_oct(lexeme[i] = getc(p_tape))) i++;    //while the next caracter is an octal number, reads the tape
+    ungetc(lexeme[i], p_tape);                                                   //put the character that is not an octal number back into the tape
+    clear_lexeme(i);
+
     return OCT;
 }
 
@@ -156,36 +169,50 @@ int is_OCT(FILE *p_tape)
 /// @return HEX if the token read is a HEX, 0 otherwise
 int is_HEX(FILE *p_tape)
 {
-    int prefixZero = getc(p_tape);
+    int prefixZero = 0;
+    lexeme[prefixZero] = getc(p_tape);
 
-    if (!is_zero(prefixZero)) //if the token does not start with the prefix zero then it is not a HEX
+    if (!is_zero(lexeme[prefixZero])) //if the token does not start with the prefix zero then it is not a HEX
     {
-        ungetc(prefixZero, p_tape); //put the character read back in the tape
+        ungetc(lexeme[prefixZero], p_tape); //put the character read back in the tape
+        clear_lexeme(prefixZero);
         return 0;
     }
 
-    int prefixHexIndicator = getc(p_tape);
+    int prefixHexIndicator = 1;
+    lexeme[prefixHexIndicator] = getc(p_tape);
 
-    if (!is_hex_indicator(prefixHexIndicator))
+    if (!is_hex_indicator(lexeme[prefixHexIndicator]))
     {
-        ungetc(prefixHexIndicator, p_tape); //put the character read back in the tape
-        ungetc(prefixZero, p_tape);         //put the prefix back in the tape
+        ungetc(lexeme[prefixHexIndicator], p_tape); //put the character read back in the tape
+        ungetc(lexeme[prefixZero], p_tape);         //put the prefix back in the tape
+
+        clear_lexeme(prefixHexIndicator);
+        clear_lexeme(prefixZero);
         return 0;
     }
 
-    int head = getc(p_tape);
+    int i = 2;
+    lexeme[i] = getc(p_tape);
 
-    if (!isxdigit(head)) //if the next character is not a hexadecimal digit then it is not a HEX
+    if (!isxdigit(lexeme[i])) //if the next character is not a hexadecimal digit then it is not a HEX
     {
-        ungetc(head, p_tape); //put the character read back in the tape
-        ungetc(prefixHexIndicator, p_tape); //put the prefix back in the tape
-        ungetc(prefixZero, p_tape); //put the prefix back in the tape
+        ungetc(lexeme[i], p_tape); //put the character read back in the tape
+        ungetc(lexeme[prefixHexIndicator], p_tape); //put the prefix back in the tape
+        ungetc(lexeme[prefixZero], p_tape); //put the prefix back in the tape
+
+        clear_lexeme(i);
+        clear_lexeme(prefixHexIndicator);
+        clear_lexeme(prefixZero);
         return 0;
     }
 
-    while (isxdigit(head = getc(p_tape))); //while the next caracter is a hexadecimal digit, reads the tape
-    ungetc(head, p_tape); //put the character that is not a hexadecimal digit back into the tape
-    printf("\t is HEX\n");
+    i++;
+    while (isxdigit(lexeme[i] = getc(p_tape))) i++; //while the next caracter is a hexadecimal digit, reads the tape
+    
+    ungetc(lexeme[i], p_tape); //put the character that is not a hexadecimal digit back into the tape
+    clear_lexeme(i);
+
     return HEX;
 }
 #pragma endregion
