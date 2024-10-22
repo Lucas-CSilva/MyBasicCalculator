@@ -7,19 +7,24 @@ char lexeme[MAX_ID_LEN + 1];
 void clear_lexeme(int index);
 void skip_spaces(FILE *p_tape);
 int is_ID(FILE *p_tape);
-int is_DEC(FILE *p_tape);
+int is_ASGN(FILE *p_tape);
+// int is_DEC(FILE *p_tape);
 int is_OCT(FILE *p_tape);
 int is_HEX(FILE *p_tape);
+int is_NUM(FILE *p_tape);
 
 #pragma region Public Functions
 int lxr_get_token(FILE *p_source)
 {
     int token = 0;
 
+    skip_spaces(p_source);
+
+    if (token = is_ASGN(p_source)) return token;
     if (token = is_ID(p_source)) return token;
     if (token = is_HEX(p_source)) return token;
     if (token = is_OCT(p_source)) return token;
-    if (token = is_DEC(p_source)) return token;
+    if (token = is_NUM(p_source)) return token;
 
     return token = getc(p_source);
 }
@@ -39,6 +44,15 @@ void skip_spaces(FILE *p_tape)
     while (isspace(head = getc(p_tape)));
 
     ungetc(head, p_tape);
+}
+
+void unget_all_read_characters(FILE *p_tape, int index)
+{
+    for (int i = index; i > -1; i--)
+    {
+        ungetc(lexeme[i], p_tape);
+        clear_lexeme(i);
+    }
 }
 
 /// @brief checks if the character is zero
@@ -64,6 +78,59 @@ int is_oct(int character)
 int is_hex_indicator(int character)
 {
     return character == 'x' || character == 'X';
+}
+
+int is_dot(int character)
+{
+    return character == '.';
+}
+
+int is_exp_indicator(int character)
+{
+    return character == 'e' || character == 'E';
+}
+
+int is_exp(int character)
+{
+    return character == '+' || character == '-' || isdigit(character);
+}
+
+int is_invalid_NUM_character(int character)
+{
+    return !isdigit(character) 
+        && !is_dot(character) 
+        && !is_exp_indicator(character)
+        && !isspace(character);
+}
+
+int is_ASGN(FILE *p_tape)
+{
+    int i = 0;
+    lexeme[i] = getc(p_tape);
+
+    if (lexeme[i] != ':')
+    {
+        ungetc(lexeme[i], p_tape);
+        clear_lexeme(i);
+        return 0;
+    }
+
+    i++;
+    lexeme[i] = getc(p_tape);
+
+    if (lexeme[i] != '=')
+    {
+        ungetc(lexeme[i], p_tape);
+        clear_lexeme(i);
+
+        i--;
+
+        ungetc(lexeme[i], p_tape);
+        clear_lexeme(i);
+        return 0;
+    }
+    
+    return ASGN;
 }
 
 /// @brief identifies if next token in the tape is an ID
@@ -93,7 +160,7 @@ int is_ID(FILE *p_tape)
 /// @brief indentifies if the next token in the tape is a DEC
 /// @param p_tape 
 /// @return DEC if the next token read is a DEC, 0 otherwise
-int is_DEC(FILE *p_tape)
+/*int is_DEC(FILE *p_tape)
 {
     int i = 0;
     lexeme[i] = getc(p_tape);
@@ -120,7 +187,7 @@ int is_DEC(FILE *p_tape)
     printf("\t is DEC\n");
 
     return DEC; 
-}
+}*/
 
 
 
@@ -155,7 +222,7 @@ int is_OCT(FILE *p_tape)
     }
 
     i++;
-    while (isdigit(lexeme[i] = getc(p_tape)) && is_oct(lexeme[i] = getc(p_tape))) i++;    //while the next caracter is an octal number, reads the tape
+    while (isdigit(lexeme[i] = getc(p_tape)) && is_oct(lexeme[i])) i++;    //while the next caracter is an octal number, reads the tape
     ungetc(lexeme[i], p_tape);                                                   //put the character that is not an octal number back into the tape
     clear_lexeme(i);
 
@@ -214,5 +281,79 @@ int is_HEX(FILE *p_tape)
     clear_lexeme(i);
 
     return HEX;
+}
+
+
+int is_NUM(FILE *p_tape)
+{
+    int i = 0;
+
+    lexeme[i] = getc(p_tape);
+    if (!isdigit(lexeme[i]) && !is_dot(lexeme[i])) // if the first char is not a digit or a dot then it is not a NUM
+    {
+        ungetc(lexeme[i], p_tape);
+        clear_lexeme(i);
+        return 0;
+    }
+
+    if (isdigit(lexeme[i]))
+    {
+        i++;
+        while (isdigit(lexeme[i] = getc(p_tape))) i++; //while the next caracter is a digit, reads the tape
+
+        if (is_invalid_NUM_character(lexeme[i]))
+        {
+            unget_all_read_characters(p_tape, i);
+            return 0;
+        }
+
+        if (isspace(lexeme[i]))
+        {
+            ungetc(lexeme[i], p_tape);
+            clear_lexeme(i);
+            return NUM;
+        }
+    }
+
+    i++;
+    //o ultimo caracter lido foi um '.', le ate encontrar um char diferente de digito
+    while (isdigit(lexeme[i] = getc(p_tape))) i++;
+
+    if (isalpha(lexeme[i]) && !is_exp_indicator(lexeme[i])) // verifica se o ultimo caracter lido e invalido
+    {
+        unget_all_read_characters(p_tape, i);
+        return 0;
+    }
+    else if (is_exp_indicator(lexeme[i])) // o char lido eh um identificador de exponencial e ou E
+    {
+        i++;
+        if (!is_exp(lexeme[i] = getc(p_tape))) // verifica se o proximo char eh um sinal ou um digito, caso nao seja, o numero eh invalido
+        {
+            unget_all_read_characters(p_tape, i);
+            return 0;
+        }
+
+        if (lexeme[i] == '+' || lexeme[i] == '-') // caso o proximo char seja um sinal, le o proximo char, caso nao seja um digito, o numero eh invalido
+        {
+            i++;
+            if (!isdigit(lexeme[i] = getc(p_tape))) // 0.1e+a
+            {
+                unget_all_read_characters(p_tape, i);
+                return 0;
+            }
+        }
+
+        i++;
+        while (isdigit(lexeme[i] = getc(p_tape))) i++; // le ate encontrar um char diferente de digito
+        ungetc(lexeme[i], p_tape);
+        clear_lexeme(i);
+        return NUM;
+    }
+    else // o char lido nao faz parte do numero
+    {
+        ungetc(lexeme[i], p_tape);
+        clear_lexeme(i);
+        return NUM;
+    }
 }
 #pragma endregion

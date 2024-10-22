@@ -5,9 +5,11 @@
 
 typedef enum {
     ID = 1024,
-    DEC,
+    // DEC,
     OCT,
     HEX,
+    NUM,
+    ASGN
 } EToken;
 
 #define MAX_ID_LEN 32
