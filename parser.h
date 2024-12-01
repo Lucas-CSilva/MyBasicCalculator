@@ -8,7 +8,7 @@ extern FILE *source;
 extern int look_ahead;
 
 extern void E(void);
-extern void match(int expected);
+extern int match(int expected);
 extern void cmd(void);
 extern void mybc(void);
 

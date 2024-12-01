@@ -13,6 +13,7 @@
 #define R_PAREN ')'
 
 int look_ahead;
+int stop_parser = 0;
 double acc = 0;
 
 int is_oplus(int c);
@@ -27,8 +28,6 @@ void mybc(void)
         match(look_ahead);
         cmd();
     }
-    
-    match(EOF);
 }
 
 void cmd(void)
@@ -38,7 +37,7 @@ void cmd(void)
         case ';':
         case '\n':
         case EOF:
-            break;
+            return;
 
         case QUIT:
         case EXIT:
@@ -46,8 +45,18 @@ void cmd(void)
 
         default:
             E();
-            printf("\tresult: %lg\n", acc);
-            break;
+            if (stop_parser)
+            {
+                stop_parser = 0;
+                while ((look_ahead = getc(source)) != ';' && look_ahead != '\n' && look_ahead != EOF);
+                return;
+            }
+            else
+            {
+                printf("result: %lg\n", acc);
+                break;
+            }
+
     }
 }
 
@@ -72,22 +81,24 @@ _F:
     switch (look_ahead)
     {
         case L_PAREN:
-            match(L_PAREN);
+            if (!match(L_PAREN)) return;
             E();
-            match(R_PAREN);
+            if (!match(R_PAREN)) return;
             break;
         
         case NUM:
             /*1*/acc = atof(lexeme);/*1*/
-            match(NUM);
+            if (!match(NUM)) return;
             break;
 
         default:
             /*5*/strcpy(varname, lexeme);/*5*/
-            match(ID);
+
+            if (!match(ID)) return;
+
             if (look_ahead == ASGN)
             {
-                match(ASGN);
+                if(!match(ASGN)) return;
                 E();
                 store(varname, acc);
             }
@@ -165,7 +176,6 @@ _F:
     {
         /*1*/
         oplus = look_ahead;
-        printf("\tpush acc\n");
         push(acc);
         /*1*/
         match(look_ahead);
@@ -173,16 +183,37 @@ _F:
     }
 }
 
-void match(int expected)
+int match(int expected)
 {
     if (look_ahead == expected)
     {
         look_ahead = gettoken(source);
+        return 1;
     }
     else
     {
-        fprintf(stderr, "Token missmatch.\n");
-        exit(-1);
+        const char *expected_str = get_token_to_string(expected);
+        const char *received_str = get_token_to_string(look_ahead);
+
+        char expected_buf[2]; // Buffer para armazenar a string do número
+        char received_buf[2]; // Buffer para armazenar a string do número
+
+        if (expected_str == NULL)
+        {
+            sprintf(expected_buf, "%c", expected);
+            expected_str = expected_buf;
+        }
+
+        if (received_str == NULL)
+        {
+            sprintf(received_buf, "%c", look_ahead);
+            received_str = received_buf;
+        }
+
+        fprintf(stderr, "Token mismatch - expected: %s - received: %s\n", expected_str, received_str);
+        stop_parser = 1;
+        return 0;
+        // exit(-1);
     }
 }
 
