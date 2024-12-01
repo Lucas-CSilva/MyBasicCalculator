@@ -3,19 +3,19 @@
 
 #include <stdio.h>
 
+#define MAX_ID_LEN 32
+
 typedef enum {
     ID = 1024,
-    // DEC,
-    OCT,
-    HEX,
     NUM,
-    ASGN
+    ASGN,
 } EToken;
-
-#define MAX_ID_LEN 32
 
 extern char lexeme[];
 
-extern int lxr_get_token(FILE *p_source);
+/// @brief Gets the next token from the source file
+/// @param p_source The source file to read from
+/// @return The next token
+extern int gettoken(FILE *source);
 
 #endif
