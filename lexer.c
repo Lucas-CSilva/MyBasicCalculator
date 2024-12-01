@@ -5,52 +5,73 @@
 char lexeme[MAX_ID_LEN + 1];
 
 void clear_lexeme(int index);
-void skip_spaces(FILE *p_tape);
-int is_ID(FILE *p_tape);
-int is_ASGN(FILE *p_tape);
-// int is_DEC(FILE *p_tape);
-int is_OCT(FILE *p_tape);
-int is_HEX(FILE *p_tape);
-int is_NUM(FILE *p_tape);
+void skip_spaces(FILE *tape);
+int isID(FILE *tape);
+int isASGN(FILE *tape);
+int isNUM(FILE *tape);
 
 #pragma region Public Functions
-int lxr_get_token(FILE *p_source)
+
+/// @brief Gets the next token from the source file
+/// @param source The source file to read from
+/// @return The next token
+int gettoken(FILE *source)
 {
     int token = 0;
 
-    skip_spaces(p_source);
+    skip_spaces(source);
 
-    if (token = is_ASGN(p_source)) return token;
-    if (token = is_ID(p_source)) return token;
-    if (token = is_HEX(p_source)) return token;
-    if (token = is_OCT(p_source)) return token;
-    if (token = is_NUM(p_source)) return token;
+    if (token = isASGN(source))
+    {
+        return token;
+    }
 
-    return token = getc(p_source);
+    if (token = isID(source)) 
+    {
+        return token;
+    }
+
+    if (token = isNUM(source))
+    {
+        return token;
+    } 
+    
+    return token = getc(source);
 }
+
 #pragma endregion
 
 #pragma region Private Functions
 
+/// @brief Clears the lexeme at the given index
+/// @param index The index to clear
 void clear_lexeme(int index)
 {
     lexeme[index] = 0;
 }
 
-void skip_spaces(FILE *p_tape)
+/// @brief Skips spaces in the input tape
+/// @param tape The input tape
+void skip_spaces(FILE *tape)
 {
     int head;
 
-    while (isspace(head = getc(p_tape)));
+    while (isspace(head = getc(tape)))
+    {
 
-    ungetc(head, p_tape);
+    }
+
+    ungetc(head, tape);
 }
 
-void unget_all_read_characters(FILE *p_tape, int index)
+/// @brief Ungets all read characters
+/// @param tape The input tape
+/// @param index The index to unget to
+void unget_all_read_characters(FILE *tape, int index)
 {
     for (int i = index; i > -1; i--)
     {
-        ungetc(lexeme[i], p_tape);
+        ungetc(lexeme[i], tape);
         clear_lexeme(i);
     }
 }
@@ -63,70 +84,48 @@ int is_zero(int character)
     return character == '0';
 }
 
-
-/// @brief checks if the character is an octal number
-/// @param character
-/// @return 1 if the character is an octal number, 0 otherwise
-int is_oct(int character)
-{
-    return character >= '0' && character <= '7';
-}
-
-/// @brief checks if the character is a hex indicator
-/// @param character 
-/// @return 1 if the character is a hex indicator, 0 otherwise
-int is_hex_indicator(int character)
-{
-    return character == 'x' || character == 'X';
-}
-
+/// @brief Checks if the character is a dot
+/// @param character The character to check
+/// @return 1 if the character is a dot, 0 otherwise
 int is_dot(int character)
 {
     return character == '.';
 }
 
+/// @brief Checks if the character is an exponent indicator
+/// @param character The character to check
+/// @return 1 if the character is an exponent indicator, 0 otherwise
 int is_exp_indicator(int character)
 {
     return character == 'e' || character == 'E';
 }
 
-int is_exp(int character)
-{
-    return character == '+' || character == '-' || isdigit(character);
-}
 
-int is_invalid_NUM_character(int character)
+/// @brief Checks if the next token in the tape is an assignment
+/// @param tape The input tape
+/// @return ASGN if the next token is an assignment, 0 otherwise
+int isASGN(FILE *tape)
 {
-    return !isdigit(character) 
-        && !is_dot(character) 
-        && !is_exp_indicator(character)
-        && !isspace(character);
-}
+    lexeme[0] = getc(tape);
 
-int is_ASGN(FILE *p_tape)
-{
-    int i = 0;
-    lexeme[i] = getc(p_tape);
-
-    if (lexeme[i] != ':')
+    if (lexeme[0] != ':') //if the token does not start with a colon then it is not an assignment
     {
-        ungetc(lexeme[i], p_tape);
-        clear_lexeme(i);
+         //put the read characters back in the tape
+        ungetc(lexeme[0], tape);
+        clear_lexeme(0);
         return 0;
     }
 
-    i++;
-    lexeme[i] = getc(p_tape);
+    lexeme[1] = getc(tape);
 
-    if (lexeme[i] != '=')
+    if (lexeme[1] != '=') //if the next character is not an equal sign then it is not an assignment
     {
-        ungetc(lexeme[i], p_tape);
-        clear_lexeme(i);
+        ungetc(lexeme[1], tape);
+        clear_lexeme(1);
 
-        i--;
+        ungetc(lexeme[0], tape);
+        clear_lexeme(0);
 
-        ungetc(lexeme[i], p_tape);
-        clear_lexeme(i);
         return 0;
     }
     
@@ -136,224 +135,142 @@ int is_ASGN(FILE *p_tape)
 /// @brief identifies if next token in the tape is an ID
 /// @param tape 
 /// @return ID if the next token read is an ID, 0 otherwise
-int is_ID(FILE *p_tape)
+int isID(FILE *tape)
 {
     int i = 0;
-    lexeme[i] = getc(p_tape);
+    lexeme[i] = getc(tape);
 
     if (!isalpha(lexeme[i]))     //if the token does not start with a letter then it is not an ID
     {
-        ungetc(lexeme[i], p_tape); //put the token back in the tape
+        ungetc(lexeme[i], tape); //put the token back in the tape
         clear_lexeme(i);
+        
         return 0;           
     }
 
     i++;
-    while (isalnum(lexeme[i] = getc(p_tape))) i++; //while the next caracter is an alphanumeic, reads the tape
+    while (isalnum(lexeme[i] = getc(tape))) i++; //while the next caracter is an alphanumeic, reads the tape
 
-    ungetc(lexeme[i], p_tape); //put the character that is not an alphanumeric back into the tape
+    ungetc(lexeme[i], tape); //put the token back in the tape
     clear_lexeme(i);
     
     return ID;
 }
 
-/// @brief indentifies if the next token in the tape is a DEC
-/// @param p_tape 
-/// @return DEC if the next token read is a DEC, 0 otherwise
-/*int is_DEC(FILE *p_tape)
+/// @brief Checks if the character is a valid start of a number
+/// @param character 
+/// @return 1 if the character is a valid start of a number, 0 otherwise
+int is_valid_start_of_num(int character)
 {
-    int i = 0;
-    lexeme[i] = getc(p_tape);
-
-    if (!isdigit(lexeme[i])) //if the token does not start with a digit then it is not a DEC
-    {
-        ungetc(lexeme[i], p_tape); //put the token back in the tape
-        clear_lexeme(i);
-        return 0;
-    }
-
-    if (is_zero(lexeme[i])) //if the token is zero then it is a DEC
-    {
-        return DEC;
-    }
-
-    i++;
-    while (isdigit(lexeme[i] = getc(p_tape))) i++; //while the next caracter is a digit, reads the tape
-    
-    ungetc(lexeme[i], p_tape); //put the character that is not a digit back into the tape
-
-    clear_lexeme(i);
-
-    printf("\t is DEC\n");
-
-    return DEC; 
-}*/
-
-
-
-/// @brief identifies if the next token in the tape is an OCT
-/// @param p_tape 
-/// @return OCT if the token read is an OCT, 0 otherwise
-int is_OCT(FILE *p_tape)
-{
-    int prefix = 0;
-    
-    lexeme[prefix] = getc(p_tape);
-
-    if (!is_zero(lexeme[prefix]))       //if the token does not start with the prefix zero then it is not an OCT
-    {
-        ungetc(lexeme[prefix], p_tape); //put the character read back in the tape
-        clear_lexeme(prefix);
-        return 0;
-    }
-
-    
-    int i = 1;
-    lexeme[i] = getc(p_tape);
-    
-    if (!is_oct(lexeme[i]))          //if the next character read it's not an octal number then it is not an OCT
-    {
-        ungetc(lexeme[i], p_tape);   //put the character read back in the tape
-        ungetc(lexeme[prefix], p_tape); //put the prefix back in the tape
-
-        clear_lexeme(i);
-        clear_lexeme(prefix);
-        return 0;
-    }
-
-    i++;
-    while (isdigit(lexeme[i] = getc(p_tape)) && is_oct(lexeme[i])) i++;    //while the next caracter is an octal number, reads the tape
-    ungetc(lexeme[i], p_tape);                                                   //put the character that is not an octal number back into the tape
-    clear_lexeme(i);
-
-    return OCT;
+    return isdigit(character) || is_dot(character);
 }
 
-
-
-/// @brief identifies if the next token in the tape is a HEX
-/// @param p_tape
-/// @return HEX if the token read is a HEX, 0 otherwise
-int is_HEX(FILE *p_tape)
-{
-    int prefixZero = 0;
-    lexeme[prefixZero] = getc(p_tape);
-
-    if (!is_zero(lexeme[prefixZero])) //if the token does not start with the prefix zero then it is not a HEX
-    {
-        ungetc(lexeme[prefixZero], p_tape); //put the character read back in the tape
-        clear_lexeme(prefixZero);
-        return 0;
-    }
-
-    int prefixHexIndicator = 1;
-    lexeme[prefixHexIndicator] = getc(p_tape);
-
-    if (!is_hex_indicator(lexeme[prefixHexIndicator]))
-    {
-        ungetc(lexeme[prefixHexIndicator], p_tape); //put the character read back in the tape
-        ungetc(lexeme[prefixZero], p_tape);         //put the prefix back in the tape
-
-        clear_lexeme(prefixHexIndicator);
-        clear_lexeme(prefixZero);
-        return 0;
-    }
-
-    int i = 2;
-    lexeme[i] = getc(p_tape);
-
-    if (!isxdigit(lexeme[i])) //if the next character is not a hexadecimal digit then it is not a HEX
-    {
-        ungetc(lexeme[i], p_tape); //put the character read back in the tape
-        ungetc(lexeme[prefixHexIndicator], p_tape); //put the prefix back in the tape
-        ungetc(lexeme[prefixZero], p_tape); //put the prefix back in the tape
-
-        clear_lexeme(i);
-        clear_lexeme(prefixHexIndicator);
-        clear_lexeme(prefixZero);
-        return 0;
-    }
-
-    i++;
-    while (isxdigit(lexeme[i] = getc(p_tape))) i++; //while the next caracter is a hexadecimal digit, reads the tape
-    
-    ungetc(lexeme[i], p_tape); //put the character that is not a hexadecimal digit back into the tape
-    clear_lexeme(i);
-
-    return HEX;
-}
-
-
-int is_NUM(FILE *p_tape)
+int read_exp(int *index, FILE *tape);
+/// @brief Identifies if the next token in the tape is a number
+/// using the following regular expression: 
+/// (uint.[0−9]∗|′.′[0−9]+)([eE][′+′′−′]?[0−9]+)?|uint[eE][′+′′−′]?[0-9]+</para>
+/// @param tape The input tape
+/// @return NUM if the next token read is a number, 0 otherwise
+int isNUM(FILE *tape)
 {
     int i = 0;
 
-    lexeme[i] = getc(p_tape);
-    if (!isdigit(lexeme[i]) && !is_dot(lexeme[i])) // if the first char is not a digit or a dot then it is not a NUM
+    lexeme[i] = getc(tape);
+
+    // a number can begin with a digit or a dot: 1 or .1
+    if (!is_valid_start_of_num(lexeme[i])) // if the first char is not a digit or a dot then it is not a NUM
     {
-        ungetc(lexeme[i], p_tape);
+        ungetc(lexeme[i], tape);
         clear_lexeme(i);
         return 0;
     }
 
+    // if the first char is a dot then it must be followed by a digit: .1
+    if (is_dot(lexeme[i]))
+    {
+        i++;
+        if (!isdigit(lexeme[i] = getc(tape))) 
+        {
+            unget_all_read_characters(tape, i);
+            return 0;
+        }
+        
+    }
+
+    // if the first char is a digit then it is a NUM
     if (isdigit(lexeme[i]))
     {
         i++;
-        while (isdigit(lexeme[i] = getc(p_tape))) i++; //while the next caracter is a digit, reads the tape
+        while (isdigit(lexeme[i] = getc(tape))) i++; //while the next caracter is a digit, reads the tape
 
-        if (is_invalid_NUM_character(lexeme[i]))
+        if (!is_dot(lexeme[i]) && !is_exp_indicator(lexeme[i])) // if the next char is not a dot or an exp indicator then it is a NUM
         {
-            unget_all_read_characters(p_tape, i);
-            return 0;
-        }
-
-        if (isspace(lexeme[i]))
-        {
-            ungetc(lexeme[i], p_tape);
+            ungetc(lexeme[i], tape);
             clear_lexeme(i);
             return NUM;
         }
     }
 
-    i++;
-    //o ultimo caracter lido foi um '.', le ate encontrar um char diferente de digito
-    while (isdigit(lexeme[i] = getc(p_tape))) i++;
-
-    if (isalpha(lexeme[i]) && !is_exp_indicator(lexeme[i])) // verifica se o ultimo caracter lido e invalido
-    {
-        unget_all_read_characters(p_tape, i);
-        return 0;
-    }
-    else if (is_exp_indicator(lexeme[i])) // o char lido eh um identificador de exponencial e ou E
+    // if the read character is a dot then it is a NUM
+    if (is_dot(lexeme[i]))
     {
         i++;
-        if (!is_exp(lexeme[i] = getc(p_tape))) // verifica se o proximo char eh um sinal ou um digito, caso nao seja, o numero eh invalido
+        if (!isdigit(lexeme[i] = getc(tape)) && !is_exp_indicator(lexeme[i]))// if the next char is not a digit or an exp indicator then the number sequence ended
         {
-            unget_all_read_characters(p_tape, i);
+            ungetc(lexeme[i], tape);
+            clear_lexeme(i);
+            return NUM;
+        }
+
+        if (is_exp_indicator(lexeme[i])) goto _HANDLE_EXP;//verificar 1.e8
+
+        i++;
+        while (isdigit(lexeme[i] = getc(tape))) i++; // le ate encontrar um char diferente de digito
+
+        if (!is_exp_indicator(lexeme[i])) // if the next char is not an exp indicator then the number sequence ended
+        {
+            ungetc(lexeme[i], tape);
+            clear_lexeme(i);
+            return NUM;
+        }
+    }
+
+    // lida com a parte exponencial do numero
+_HANDLE_EXP:
+        i++;
+        lexeme[i] = getc(tape);
+        if (!isdigit(lexeme[i]) && lexeme[i] != '+' && lexeme[i] != '-') 
+        {
+            unget_all_read_characters(tape, i);
             return 0;
         }
 
-        if (lexeme[i] == '+' || lexeme[i] == '-') // caso o proximo char seja um sinal, le o proximo char, caso nao seja um digito, o numero eh invalido
-        {
-            i++;
-            if (!isdigit(lexeme[i] = getc(p_tape))) // 0.1e+a
-            {
-                unget_all_read_characters(p_tape, i);
-                return 0;
-            }
-        }
-
         i++;
-        while (isdigit(lexeme[i] = getc(p_tape))) i++; // le ate encontrar um char diferente de digito
-        ungetc(lexeme[i], p_tape);
+        while (isdigit(lexeme[i] = getc(tape))) i++; 
+        
+        ungetc(lexeme[i], tape);
         clear_lexeme(i);
         return NUM;
-    }
-    else // o char lido nao faz parte do numero
+    // }
+}
+
+int read_exp(int *index, FILE *tape)
+{
+    (*index)++;
+
+    lexeme[*index] = getc(tape);
+    if (!isdigit(lexeme[*index]) && lexeme[*index] != '+' && lexeme[*index] != '-') 
     {
-        ungetc(lexeme[i], p_tape);
-        clear_lexeme(i);
-        return NUM;
+        unget_all_read_characters(tape, *index);
+        return 0;
     }
+
+    (*index)++;
+    while (isdigit(lexeme[*index] = getc(tape))) (*index)++;
+
+    ungetc(lexeme[*index], tape);
+    clear_lexeme(*index);
+    
+    return NUM;
 }
 #pragma endregion

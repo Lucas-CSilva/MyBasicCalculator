@@ -1,6 +1,6 @@
 CFLAGS = -I. -g
 
-relocatable = mybc.o lexer.o parser.o
+relocatable = mybc.o lexer.o parser.o symtab.o
 
 mybc: $(relocatable)
 	$(CC) -o mybc $(relocatable)

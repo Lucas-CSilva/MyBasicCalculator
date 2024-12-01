@@ -1,71 +1,80 @@
-#include <symtab.h>
+#include <stdlib.h>
+#include <string.h>
 #include <lexer.h>
+#include <symtab.h>
 
 double stack[STACK_SIZE];
 double vector_memory[SYMB_TAB_SIZE];
-
 char symtab[SYMB_TAB_SIZE][MAX_ID_LEN];
 
-double acc = 0;
 int symtab_next_entry = 0;
 int stack_pointer = -1;
 
-
+/// @brief Pops the top value from the stack
+/// @return The top value from the stack
 double pop(void)
 {
     if (stack_pointer < 0)
     {
-        fprintf(stderr, "can't pop an empty stackt"); 
+        fprintf(stderr, "Error: can't pop from an empty stack.\n"); 
         exit(-1);
     }
 
     return stack[stack_pointer--];
 }
 
+/// @brief Pushes a value onto the stack
+/// @param value The value to push onto the stack
 void push(double value)
 {
     if (stack_pointer == STACK_SIZE - 1)
     {
-        fprintf(stderr, "can't push to an empty stackt"); 
+        fprintf(stderr, "Error: can't push to a full stack.\n"); 
         exit(-1);
     }
     
     stack[++stack_pointer] = value;
 }
 
-/// @brief lookup in the symtab if varName has already been added
-/// @param varName 
-/// @return next position 
-int symtab_lookup(char *var_name)
+/// @brief Looks up a variable in the symbol table
+/// @param var_name The name of the variable to look up
+/// @return The index of the variable in the symbol table
+int symtab_lookup(const char *var_name)
 {
-    int i;
-
-    for (i = 0; i < symtab_next_entry; i++)
+    for (int i = 0; i < symtab_next_entry; i++)
     {
-        if (strcmp(var_name, symtab[i]) == 0) break;
+        if (strcmp(var_name, symtab[i]) == 0)
+        {
+            return i;
+        }
     }
 
-    if (i == symtab_next_entry)
+    if (symtab_next_entry < SYMB_TAB_SIZE)
     {
-        strcpy(symtab[i], var_name);
+        strcpy(symtab[symtab_next_entry], var_name);
+        return symtab_next_entry++;
     }
-
-    return i;
+    else
+    {
+        fprintf(stderr, "Error: symbol table is full.\n");
+        exit(-1);
+    }
 }
 
-void store(char *var_name, double value)
+/// @brief Stores a value in the symbol table
+/// @param var_name The name of the variable
+/// @param value The value to store
+void store(const char *var_name, double value)
 {
-    int i = symtab_lookup(var_name);
-
-    vector_memory[i] = value;
+    int index = symtab_lookup(var_name);
+    vector_memory[index] = value;
 }
 
-
-double recall(char *var_name)
-{   
-    int i = symtab_lookup(var_name);
-    
-    return vector_memory[i];
-    // if varname exists return
-    // if varname doesnt exists create var and return 0
+/// @brief Recalls a value from the symbol table
+/// @param var_name The name of the variable
+/// @return The value of the variable
+double recall(const char *var_name)
+{
+    int index = symtab_lookup(var_name);
+    return vector_memory[index];
 }

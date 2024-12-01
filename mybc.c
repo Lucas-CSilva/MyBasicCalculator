@@ -2,15 +2,15 @@
 #include <parser.h>
 #include <lexer.h>
 
-FILE *pSource;
+FILE *source;
 
 int main() 
 {
-    pSource = stdin;
+    source = stdin;
 
-    look_ahead = lxr_get_token(pSource);
-    
-    psr_E();
+    look_ahead = gettoken(source);
+
+    mybc();
 
     return 0;
 }
