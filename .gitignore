@@ -1,6 +1,4 @@
 .vscode/
 
 mybc
-mybc.o
-lexer.o
-parser.o
+*.o
