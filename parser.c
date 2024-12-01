@@ -2,6 +2,7 @@
 #include <string.h>
 #include <lexer.h>
 #include <symtab.h>
+#include <keywords.h>
 #include <parser.h>
 
 #define PLUS '+'
@@ -39,9 +40,9 @@ void cmd(void)
         case EOF:
             break;
 
-        // case QUIT:
-        // case EXIT:
-        //     exit(0);
+        case QUIT:
+        case EXIT:
+            exit(0);
 
         default:
             E();

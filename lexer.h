@@ -18,4 +18,6 @@ extern char lexeme[];
 /// @return The next token
 extern int gettoken(FILE *source);
 
+extern char* get_token_to_string(int token);
+
 #endif

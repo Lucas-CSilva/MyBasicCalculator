@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <stdio.h>
+#include <keywords.h>
 #include <lexer.h>
 
 char lexeme[MAX_ID_LEN + 1];
@@ -37,6 +38,21 @@ int gettoken(FILE *source)
     } 
     
     return token = getc(source);
+}
+
+char* get_token_to_string(int token)
+{
+    switch (token)
+    {
+        case ID:
+            return "ID";
+        case NUM:
+            return "NUM";
+        case ASGN:
+            return "ASGN";
+        default:
+            return NULL;
+    }
 }
 
 #pragma endregion
@@ -153,6 +169,12 @@ int isID(FILE *tape)
 
     ungetc(lexeme[i], tape); //put the token back in the tape
     clear_lexeme(i);
+    
+    int keyword = 0; //check if the token is a keyword
+    if (keyword = is_keyword(lexeme)) //if the token is a keyword then return the keyword ID 
+    {
+        return keyword;
+    } 
     
     return ID;
 }
