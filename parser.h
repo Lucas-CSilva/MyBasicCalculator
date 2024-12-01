@@ -4,10 +4,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern FILE *pSource;
+extern FILE *source;
 extern int look_ahead;
 
-extern void psr_E(void);
+extern void E(void);
 extern void match(int expected);
+extern void cmd(void);
+extern void mybc(void);
+
+extern double acc;
 
 #endif

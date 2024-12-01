@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <lexer.h>
+#include <symtab.h>
 #include <parser.h>
 
 #define PLUS '+'
@@ -11,18 +12,52 @@
 #define R_PAREN ')'
 
 int look_ahead;
+double acc = 0;
 
 int is_oplus(int c);
 int is_otimes(int c);
 
 #pragma region Public Functions 
-
-void psr_E(void)
+void mybc(void)
 {
+    cmd();
+    while (look_ahead == ';' || look_ahead == '\n' )
+    {
+        match(look_ahead);
+        cmd();
+    }
+    
+    match(EOF);
+}
+
+void cmd(void)
+{
+    switch (look_ahead)
+    {
+        case ';':
+        case '\n':
+        case EOF:
+            break;
+
+        // case QUIT:
+        // case EXIT:
+        //     exit(0);
+
+        default:
+            E();
+            printf("\tresult: %lg\n", acc);
+            break;
+    }
+}
+
+void E(void)
+{
+    /*0*/
     int oplus = 0;
     int otimes = 0;
     int signal = 0;
     char varname[MAX_ID_LEN + 1];
+    /*0*/
     
     if (is_oplus(look_ahead))
     {
@@ -37,28 +72,13 @@ _F:
     {
         case L_PAREN:
             match(L_PAREN);
-            psr_E();
+            E();
             match(R_PAREN);
             break;
         
         case NUM:
-            /*1*/printf("\tmov %s, acc\n", lexeme);/*1*/
+            /*1*/acc = atof(lexeme);/*1*/
             match(NUM);
-            break;
-
-        // case DEC:
-        //     printf("\t%s\n", lexeme);
-        //     match(DEC);
-        //     break;
-
-        case OCT:
-            printf("\t%s\n", lexeme);
-            match(OCT);
-            break;
-
-        case HEX:
-            printf("\t%s\n", lexeme);
-            match(HEX);
             break;
 
         default:
@@ -67,14 +87,13 @@ _F:
             if (look_ahead == ASGN)
             {
                 match(ASGN);
-                psr_E();
-                printf("\tstore(%s, acc)\n", varname); // -> funcao store
+                E();
+                store(varname, acc);
             }
             else
             {
-                // R-value variavel de consulta
                 /*4*/
-                printf("\tacc = recall(%s)\n", varname);
+                acc = recall(varname);
                 /*4*/
             }
     }
@@ -85,20 +104,26 @@ _F:
         switch (otimes)
         {
             case TIMES:
-                printf("\ttimes stack sp, acc\n"/*, otimes*/);
+                /*1*/stack[stack_pointer] *= acc;/*1*/
                 break;
             
             case DIV:
-                printf("\tdivision stack sp, acc\n"/*, otimes*/);
+                /*1*/stack[stack_pointer] /= acc;/*1*/
                 break;
         }
 
+        /*1*/
+        acc = pop();
         otimes = 0;
+        /*1*/
     }
 
     if (is_otimes(look_ahead))
     {
+        /*1*/
         otimes = look_ahead;
+        push(acc); 
+        /*1*/
         match(look_ahead);
         goto _F;
     }
@@ -106,8 +131,10 @@ _F:
 // end _ T:
     if (signal)
     {
-        printf("\tneg acc\n");
+        /*1*/
+        acc = -acc;
         signal = 0;
+        /*1*/
     }
 
     if (oplus)
@@ -115,16 +142,22 @@ _F:
         switch (oplus)
         {
             case PLUS:
-                printf("\tadd acc, stack[sp]\n"/*, oplus*/);
+                /*1*/
+                stack[stack_pointer] += acc;
+                /*1*/
                 break;
             
             case MINUS:
-                printf("\tsub acc, stack[sp]\n"  /*, oplus*/);
+                /*1*/
+                stack[stack_pointer] -= acc;
+                /*1*/
                 break;
         }
 
+        /*1*/
+        acc = pop();
+        /*1*/
         oplus = 0;
-        printf("\tpop acc\n");
     }
 
     if (is_oplus(look_ahead))
@@ -132,6 +165,7 @@ _F:
         /*1*/
         oplus = look_ahead;
         printf("\tpush acc\n");
+        push(acc);
         /*1*/
         match(look_ahead);
         goto _T;
@@ -142,7 +176,7 @@ void match(int expected)
 {
     if (look_ahead == expected)
     {
-        look_ahead = lxr_get_token(pSource);
+        look_ahead = gettoken(source);
     }
     else
     {
