@@ -187,7 +187,6 @@ int is_valid_start_of_num(int character)
     return isdigit(character) || is_dot(character);
 }
 
-int read_exp(int *index, FILE *tape);
 /// @brief Identifies if the next token in the tape is a number
 /// using the following regular expression: 
 /// (uint.[0−9]∗|′.′[0−9]+)([eE][′+′′−′]?[0−9]+)?|uint[eE][′+′′−′]?[0-9]+</para>
@@ -247,7 +246,7 @@ int isNUM(FILE *tape)
         if (is_exp_indicator(lexeme[i])) goto _HANDLE_EXP;//verificar 1.e8
 
         i++;
-        while (isdigit(lexeme[i] = getc(tape))) i++; // le ate encontrar um char diferente de digito
+        while (isdigit(lexeme[i] = getc(tape))) i++; // read the tape until the end of the digit sequence
 
         if (!is_exp_indicator(lexeme[i])) // if the next char is not an exp indicator then the number sequence ended
         {
@@ -257,42 +256,21 @@ int isNUM(FILE *tape)
         }
     }
 
-    // lida com a parte exponencial do numero
+// reads the exp indicator
 _HANDLE_EXP:
         i++;
         lexeme[i] = getc(tape);
-        if (!isdigit(lexeme[i]) && lexeme[i] != '+' && lexeme[i] != '-') 
+        if (!isdigit(lexeme[i]) && lexeme[i] != '+' && lexeme[i] != '-') // if the next char is not a digit or a sign then it is not a NUM
         {
             unget_all_read_characters(tape, i);
             return 0;
         }
 
         i++;
-        while (isdigit(lexeme[i] = getc(tape))) i++; 
+        while (isdigit(lexeme[i] = getc(tape))) i++; // read the tape until the end of the digit sequence
         
         ungetc(lexeme[i], tape);
         clear_lexeme(i);
         return NUM;
-    // }
-}
-
-int read_exp(int *index, FILE *tape)
-{
-    (*index)++;
-
-    lexeme[*index] = getc(tape);
-    if (!isdigit(lexeme[*index]) && lexeme[*index] != '+' && lexeme[*index] != '-') 
-    {
-        unget_all_read_characters(tape, *index);
-        return 0;
-    }
-
-    (*index)++;
-    while (isdigit(lexeme[*index] = getc(tape))) (*index)++;
-
-    ungetc(lexeme[*index], tape);
-    clear_lexeme(*index);
-    
-    return NUM;
 }
 #pragma endregion
