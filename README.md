@@ -18,7 +18,7 @@ Para compilar o projeto, certifique-se de ter o `make` e um compilador C (como o
 Para compilar a calculadora, execute o comando `make` no diretório raiz do projeto. Isso criará o arquivo executável `mybc`.
 
 ```bash
-make
+make mybc
 ```
 
 ### Limpar os arquivos de compilação
